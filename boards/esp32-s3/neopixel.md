@@ -2,64 +2,72 @@
 
 ## 1. Project Title
 
-**Touch-Controlled RGB LED Strip using ESP32-S3**
+**Touch-Controlled RGB LED Strip using Digicomp ESP32-S3 Dev Board**
 
 ---
 
 ## 2. Project Overview
 
-This project uses an **ESP32-S3-WROOM** to control a **WS2812B addressable RGB LED strip**.
+This project uses an **Digicomp ESP32-S3 Dev Board** to control a **WS2812B addressable RGB LED strip** using a touch/sensing input.
 
-A touch/sensing input is connected to **GPIO 14**. When the sensing pin is touched, the ESP32 detects the change and switches the LED strip to the next predefined color pattern.
+The project supports three different touch actions:
 
-The project also includes a **brightness control through serial input**. A brightness value can be sent from a laptop to the ESP32, allowing the brightness of the LED strip to be changed.
+- **Short Touch** → Changes the LED color
+- **Long Touch (1 second or more)** → Activates rainbow animation
+- **Double Touch** → Turns the LED strip ON/OFF
+
+The program also performs automatic touch calibration and uses an increased touch sensitivity threshold for better touch detection.
 
 ---
 
 ## 3. Hardware Components
 
-* ESP32-S3-WROOM
-* WS2812B RGB LED strip
-* Jumper wires
-* USB cable
-* Computer/Laptop
-* Power supply for the LED strip
+- Digicomp ESP32-S3 Dev Board-WROOM
+- WS2812B RGB LED strip
+- Touch/Sensing input
+- Jumper wires
+- USB cable
+- Computer/Laptop
+- Suitable 5V power supply
 
 ---
 
 ## 4. Pin Connections
 
-| Component           | ESP32-S3 Pin                        |
-| ------------------- | ----------------------------------- |
-| WS2812B Data Input  | GPIO 4                              |
-| Touch/Sensing Input | GPIO 14                             |
-| GND                 | GND                                 |
-| LED Strip Power     | External 5V / suitable power supply |
+| Component | Digicomp ESP32-S3 Dev Board Pin |
+|---|---|
+| WS2812B Data Input | GPIO 4 |
+| Touch/Sensing Input | GPIO 14 |
+| WS2812B GND | GND |
+| LED Strip Power | External 5V / suitable power supply |
 
 ### Connection Summary
 
-**GPIO 4 → WS2812B Data IN**
-
-**GPIO 14 → Touch/Sensing input**
-
-**ESP32 GND → LED Strip GND**
+- **Digicomp ESP32-S3 Dev Board GPIO 4 → WS2812B Data IN**
+- **Digicomp ESP32-S3 Dev Board GPIO 14 → Touch/Sensing input**
+- **Digicomp ESP32-S3 Dev Board GND → LED Strip GND**
+- **LED Strip Power → Suitable 5V power supply**
 
 ---
 
 ## 5. Software Used
 
-* MicroPython
-* VS Code
-* MicroPico extension
-* `neopixel` module
-* `machine` module
-* `uselect` module
+- MicroPython
+- VS Code
+- MicroPico extension
+- `neopixel` module
+- `machine` module
+- `time` module
 
 ---
 
 ## 6. How the Project Works
 
 The project has three main parts:
+
+1. RGB LED control
+2. Touch/sensing input
+3. Touch-based control actions
 
 ### 6.1 RGB LED Control
 
@@ -68,334 +76,314 @@ The WS2812B LED strip is connected to **GPIO 4**.
 The program creates a NeoPixel object:
 
 ```python
-np = neopixel.NeoPixel(Pin(4, Pin.OUT), NUM_LEDS)
-```
-
-The project uses **30 LEDs**:
-
-```python
 NUM_LEDS = 30
 ```
 
-Each LED can be individually controlled with RGB values.
-
-For example:
-
-```python
-(255, 0, 0)
-```
-
-represents red.
-
-```python
-(0, 255, 0)
-```
-
-represents green.
-
-```python
-(0, 0, 255)
-```
-
-represents blue.
-
 ---
 
-### 6.2 Touch/Sensing
+### 6.2 Touch/Sensing Input
 
-**GPIO 14** is used as the touch/sensing input.
+The touch/sensing input is connected to **GPIO 14**.
 
-```python
+~~~python
 touch = TouchPad(Pin(14))
-```
+~~~
 
-When the program starts, it first measures the normal sensor value without touching the pin.
+The program automatically measures the normal touch sensor value during startup.
 
-This is called the **baseline**.
+It takes 20 readings:
 
-The program takes 20 readings:
+~~~python
+total = 0
 
-```python
 for i in range(20):
     total += touch.read()
     time.sleep(0.05)
-```
 
-Then it calculates:
-
-```python
 baseline = total / 20
-```
+~~~
 
-A threshold is calculated from the baseline:
+The average value is stored as the **baseline**.
 
-```python
-threshold = baseline * 0.30 + 5000
-```
+---
 
-During the main loop, the current touch value is compared with the baseline:
+### 6.3 Touch Sensitivity
 
-```python
-value = touch.read()
+The touch sensitivity is increased using the following threshold:
+
+~~~python
+threshold = baseline * 0.20 + 2000
+~~~
+
+The current touch value is compared with the baseline:
+
+~~~python
 difference = abs(value - baseline)
-```
+~~~
 
-If the difference becomes larger than the threshold, the program considers it a touch.
+A touch is detected when:
 
----
+~~~python
+difference > threshold
+~~~
 
-### 6.3 Changing the LED Pattern
+This allows the system to detect lighter touches more easily.
 
-When a touch is detected:
-
-```python
-if difference > threshold and not touched:
-```
-
-the program increases the pattern index:
-
-```python
-pattern_index += 1
-```
-
-If the last pattern has been reached, it returns to the first pattern:
-
-```python
-if pattern_index >= len(patterns):
-    pattern_index = 0
-```
-
-Then the new pattern is displayed:
-
-```python
-show_pattern()
-```
-
-Therefore, each touch changes the LED strip to the **next color pattern**.
+**Note:** The touch sensor should not be touched during the initial calibration period.
 
 ---
 
-## 7. LED Patterns
+## 7. LED Colors
 
-The program contains three predefined patterns.
+The program contains six predefined colors:
 
-### Pattern 1
+~~~python
+colors = [
+    (255, 0, 0),
+    (0, 255, 0),
+    (0, 0, 255),
+    (255, 255, 0),
+    (255, 0, 255),
+    (0, 255, 255)
+]
+~~~
 
-```text
-Red → Green → Blue → Yellow → Magenta
-```
+The colors are:
 
-### Pattern 2
+1. Red
+2. Green
+3. Blue
+4. Yellow
+5. Purple
+6. Cyan
 
-```text
-Cyan → Orange → Purple → Greenish Cyan
-```
-
-### Pattern 3
-
-```text
-White → Red → Blue
-```
-
-The colors repeat across all 30 LEDs.
-
-For example, if a pattern contains five colors, the program uses:
-
-```python
-color = colors[i % len(colors)]
-```
-
-This allows the smaller color pattern to repeat across the entire LED strip.
+The current color is selected using `color_index`.
 
 ---
 
 ## 8. Brightness Control
 
-The program has a brightness variable:
+The program uses a brightness value of:
 
-```python
+~~~python
 brightness = 255
-```
-
-The maximum brightness is **255** and the minimum is **0**.
+~~~
 
 The RGB values are adjusted according to the brightness:
 
-```python
+~~~python
 r = color[0] * brightness // 255
 g = color[1] * brightness // 255
 b = color[2] * brightness // 255
-```
+~~~
 
-This means the same color pattern can be displayed at different brightness levels.
-
----
-
-## 9. Serial Brightness Input
-
-The ESP32 can also receive a brightness value through the serial connection.
-
-The program checks whether data has been received:
-
-```python
-events = poll.poll(0)
-```
-
-When a value is received:
-
-```python
-brightness = int(line)
-```
-
-The value is limited between **0 and 255**.
-
-For example:
-
-```text
-50
-```
-
-sets low brightness.
-
-```text
-150
-```
-
-sets medium brightness.
-
-```text
-255
-```
-
-sets maximum brightness.
-
-After changing the brightness, the LED pattern is displayed again.
+This allows the LED brightness to be controlled through the program.
 
 ---
 
-## 10. Touch Detection Protection
+## 9. Short Touch Operation
 
-The variable:
+A short touch is detected when the touch duration is **less than 1 second**.
 
-```python
-touched = False
-```
+The program changes to the next predefined color.
 
-is used to prevent one continuous touch from changing the pattern repeatedly.
+~~~python
+color_index += 1
 
-When a touch is detected:
+if color_index >= len(colors):
+    color_index = 0
 
-```python
-touched = True
-```
+show_color(colors[color_index])
+~~~
 
-The program then waits until the finger is removed.
+Each short touch moves to the next color.
 
-When the sensor value returns close to the baseline:
+After the last color, the program returns to the first color.
 
-```python
-if difference < threshold * 0.4:
-    touched = False
-```
+### Short Touch
 
-the system becomes ready for the next touch.
-
-This makes the project work as:
-
-```text
-Touch
-  ↓
-Detect
-  ↓
-Change Pattern Once
-  ↓
-Finger Removed
-  ↓
-Ready for Next Touch
-```
+**Short Touch → Change Color**
 
 ---
 
-## 11. Complete MicroPython Program
+## 10. Long Touch Operation
 
-```python
+A long touch is detected when the touch duration is **1 second or more**.
+
+The program checks:
+
+~~~python
+if duration >= 1000:
+~~~
+
+When a long touch is detected, the rainbow animation starts:
+
+~~~python
+rainbow()
+~~~
+
+### Long Touch
+
+**Long Touch (≥ 1 second) → Rainbow Animation**
+
+---
+
+## 11. Double Touch Operation
+
+The program detects two short touches within approximately **800 milliseconds**.
+
+The time between touches is checked using:
+
+~~~python
+if time.ticks_diff(current_time, last_touch_time) < 800:
+~~~
+
+When a double touch is detected:
+
+~~~python
+toggle_power()
+~~~
+
+The LED strip is either turned ON or OFF.
+
+### Double Touch
+
+**Double Touch → LED ON/OFF**
+
+---
+
+## 12. LED ON/OFF Control
+
+The LED power state is stored using:
+
+~~~python
+power = True
+~~~
+
+The power state is changed using:
+
+~~~python
+power = not power
+~~~
+
+If the LED strip is ON, the current color is displayed.
+
+If the LED strip is OFF, all LEDs are cleared:
+
+~~~python
+clear_strip()
+~~~
+
+The function used is:
+
+~~~python
+def toggle_power():
+    global power
+
+    power = not power
+
+    if power:
+        show_color(colors[color_index])
+        print("LED STRIP ON")
+    else:
+        clear_strip()
+        print("LED STRIP OFF")
+~~~
+
+---
+
+## 13. Rainbow Animation
+
+The rainbow animation is generated using a loop:
+
+~~~python
+for j in range(256):
+~~~
+
+Each LED receives a different RGB value based on its position.
+
+The program calculates the RGB values for all 30 LEDs and updates the LED strip continuously.
+
+~~~python
+np.write()
+time.sleep(0.01)
+~~~
+
+The rainbow animation continues while the LED strip is powered ON.
+
+---
+
+## 14. Touch Duration Detection
+
+The program measures how long the touch sensor is activated.
+
+When a touch starts:
+
+~~~python
+start_time = time.ticks_ms()
+~~~
+
+The program waits until the touch is released:
+
+~~~python
+while abs(touch.read() - baseline) > threshold:
+    time.sleep(0.02)
+~~~
+
+When the touch ends:
+
+~~~python
+end_time = time.ticks_ms()
+~~~
+
+The duration is calculated using:
+
+~~~python
+duration = time.ticks_diff(end_time, start_time)
+~~~
+
+The duration determines whether the action is:
+
+- Short touch
+- Long touch
+- Part of a double touch
+
+---
+
+## 15. Complete MicroPython Program
+
+The complete program used in `main.py` is:
+
+~~~python
 from machine import Pin, TouchPad
 import neopixel
 import time
-import sys
-import uselect
 
 # -------------------------
-# LED STRIP SETTINGS
+# SETTINGS
 # -------------------------
 
 NUM_LEDS = 30
-np = neopixel.NeoPixel(Pin(4, Pin.OUT), NUM_LEDS)
 
-# -------------------------
-# TOUCH SENSOR GPIO 14
-# -------------------------
+
 
 touch = TouchPad(Pin(14))
 
-# -------------------------
-# LED PATTERNS
-# -------------------------
-
-patterns = [
-
-    [
-        (255, 0, 0),
-        (0, 255, 0),
-        (0, 0, 255),
-        (255, 255, 0),
-        (255, 0, 255)
-    ],
-
-    [
-        (0, 255, 255),
-        (255, 100, 0),
-        (150, 0, 255),
-        (0, 255, 100)
-    ],
-
-    [
-        (255, 255, 255),
-        (255, 0, 0),
-        (0, 0, 255)
-    ]
+colors = [
+    (255, 0, 0),      # Red
+    (0, 255, 0),      # Green
+    (0, 0, 255),      # Blue
+    (255, 255, 0),    # Yellow
+    (255, 0, 255),    # Purple
+    (0, 255, 255)     # Cyan
 ]
 
-pattern_index = 0
+color_index = 0
 brightness = 255
-
-
-# -------------------------
-# SHOW LED WITH BRIGHTNESS
-# -------------------------
-
-def show_pattern():
-
-    colors = patterns[pattern_index]
-
-    for i in range(NUM_LEDS):
-
-        color = colors[i % len(colors)]
-
-        r = color[0] * brightness // 255
-        g = color[1] * brightness // 255
-        b = color[2] * brightness // 255
-
-        np[i] = (r, g, b)
-
-    np.write()
-
-
-show_pattern()
-
+power = True
 
 # -------------------------
-# CALIBRATE TOUCH
+# CALIBRATION
 # -------------------------
 
 print("Calibrating...")
@@ -411,135 +399,320 @@ baseline = total / 20
 
 print("Baseline:", baseline)
 
-threshold = baseline * 0.30 + 5000
+# INCREASED TOUCH SENSITIVITY
+threshold = baseline * 0.20 + 2000
 
-print("Touch threshold:", threshold)
+print("Threshold:", threshold)
+
+# -------------------------
+# LED FUNCTIONS
+# -------------------------
+
+def clear_strip():
+    for i in range(NUM_LEDS):
+        np[i] = (0, 0, 0)
+    np.write()
+
+
+def show_color(color):
+    if not power:
+        clear_strip()
+        return
+
+    for i in range(NUM_LEDS):
+        r = color[0] * brightness // 255
+        g = color[1] * brightness // 255
+        b = color[2] * brightness // 255
+
+        np[i] = (r, g, b)
+
+    np.write()
+
+
+def change_color():
+    global color_index
+
+    color_index += 1
+
+    if color_index >= len(colors):
+        color_index = 0
+
+    show_color(colors[color_index])
+
+    print("COLOR CHANGED")
+
+
+def rainbow():
+    print("RAINBOW MODE")
+
+    for j in range(256):
+
+        if not power:
+            return
+
+        for i in range(NUM_LEDS):
+
+            pixel = (i * 256 // NUM_LEDS + j) & 255
+
+            if pixel < 85:
+                r = pixel * 3
+                g = 255 - pixel * 3
+                b = 0
+
+            elif pixel < 170:
+                pixel -= 85
+                r = 255 - pixel * 3
+                g = 0
+                b = pixel * 3
+
+            else:
+                pixel -= 170
+                r = 0
+                g = pixel * 3
+                b = 255 - pixel * 3
+
+            r = r * brightness // 255
+            g = g * brightness // 255
+            b = b * brightness // 255
+
+            np[i] = (r, g, b)
+
+        np.write()
+        time.sleep(0.01)
+
+
+def toggle_power():
+    global power
+
+    power = not power
+
+    if power:
+        show_color(colors[color_index])
+        print("LED STRIP ON")
+    else:
+        clear_strip()
+        print("LED STRIP OFF")
 
 
 # -------------------------
-# SERIAL INPUT SETUP
+# START
 # -------------------------
 
-poll = uselect.poll()
-poll.register(sys.stdin, uselect.POLLIN)
+show_color(colors[color_index])
 
+print("Smart Touch RGB System Started!")
+print()
+print("SHORT TOUCH  = Change Color")
+print("LONG TOUCH   = Rainbow")
+print("DOUBLE TOUCH = ON/OFF")
+print()
 
 # -------------------------
 # MAIN LOOP
 # -------------------------
 
-touched = False
+last_touch_time = 0
 
 while True:
 
-    # RECEIVE MUSIC VALUE FROM LAPTOP
-    events = poll.poll(0)
-
-    if events:
-
-        try:
-            line = sys.stdin.readline().strip()
-
-            if line:
-                brightness = int(line)
-
-                if brightness > 255:
-                    brightness = 255
-
-                if brightness < 0:
-                    brightness = 0
-
-                show_pattern()
-
-                print("Music brightness:", brightness)
-
-        except:
-            pass
-
-
-    # TOUCH SENSOR
     value = touch.read()
     difference = abs(value - baseline)
 
+    # TOUCH START
+    if difference > threshold:
 
-    # CHANGE COLOR PATTERN ON TOUCH
-    if difference > threshold and not touched:
+        start_time = time.ticks_ms()
 
-        touched = True
+        print("TOUCH START")
 
-        pattern_index += 1
+        # Wait while finger is touching
+        while abs(touch.read() - baseline) > threshold:
+            time.sleep(0.02)
 
-        if pattern_index >= len(patterns):
-            pattern_index = 0
+        end_time = time.ticks_ms()
 
-        show_pattern()
+        duration = time.ticks_diff(end_time, start_time)
 
-        print("TOUCH DETECTED!")
-        print("COLOR CHANGED!")
+        print("Touch duration:", duration, "ms")
 
-        time.sleep(0.5)
+        # -------------------------
+        # LONG TOUCH
+        # -------------------------
 
+        if duration >= 1000:
 
-    # FINGER REMOVED
-    if difference < threshold * 0.4:
-        touched = False
+            print("LONG TOUCH DETECTED")
 
+            rainbow()
+
+        # -------------------------
+        # SHORT TOUCH
+        # -------------------------
+
+        else:
+
+            current_time = time.ticks_ms()
+
+            # DOUBLE TOUCH
+            if time.ticks_diff(current_time, last_touch_time) < 800:
+
+                print("DOUBLE TOUCH DETECTED")
+
+                toggle_power()
+
+                last_touch_time = 0
+
+            # SINGLE TOUCH
+            else:
+
+                print("SINGLE TOUCH")
+
+                change_color()
+
+                last_touch_time = current_time
+
+        # Wait a little
+        time.sleep(0.3)
 
     time.sleep(0.02)
-```
+~~~
 
 ---
 
-## 12. Working Flow
+## 16. Working Flow
 
-```text
-ESP32-S3 Starts
+~~~text
+Digicomp ESP32-S3 Dev Board Starts
        ↓
-Initialize WS2812B Strip
+Initialize WS2812B LED Strip
        ↓
-Initialize GPIO 14 Touch Sensor
+Initialize Touch Input on GPIO 14
        ↓
 Calibrate Touch Sensor
        ↓
-Calculate Baseline & Threshold
+Calculate Baseline
        ↓
-Display Initial LED Pattern
+Calculate Touch Threshold
        ↓
-       ┌─────────────────────┐
-       │     Main Loop       │
-       └─────────────────────┘
-          ↓             ↓
-   Serial Input      Touch Input
-          ↓             ↓
- Change Brightness   Detect Touch
-          ↓             ↓
-   Update LEDs       Next Pattern
-          ↓             ↓
-          └──────┬──────┘
-                 ↓
-             Repeat
-```
+Display Initial LED Color
+       ↓
+Main Loop
+       ↓
+Detect Touch
+       ↓
+Measure Touch Duration
+       ↓
+ ┌───────────────┬────────────────┬─────────────────┐
+ ↓               ↓                ↓
+Short Touch    Long Touch      Double Touch
+ ↓               ↓                ↓
+Change Color   Rainbow Mode     ON/OFF
+ └───────────────┴────────────────┴─────────────────┘
+       ↓
+Repeat
+~~~
 
 ---
 
-## 13. Result
+## 17. Program Execution
 
-The **Touch-Controlled RGB LED Strip** was successfully implemented using the ESP32-S3.
+The project was developed and tested using **VS Code** with the **MicroPico extension**.
 
-The system can:
+### Steps
 
-* Detect touch through **GPIO 14**
-* Control **30 WS2812B RGB LEDs**
-* Change LED patterns when touched
-* Cycle through multiple predefined patterns
-* Control LED brightness
-* Receive brightness values through serial communication
-* Prevent repeated pattern changes from a continuous touch
+1. Connect the Digicomp ESP32-S3 Dev Board to the computer using USB.
+2. Open the project in VS Code.
+3. Create or open `main.py`.
+4. Insert the MicroPython program.
+5. Save the program using **Ctrl + S**.
+6. Connect the Digicomp ESP32-S3 Dev Board using MicroPico.
+7. Upload/flash the program to the Digicomp ESP32-S3 Dev Board.
+8. The program starts from `main.py`.
+9. Test the touch operations.
 
 ---
 
-## 14. Conclusion
+## 18. Testing
 
-This project demonstrates how an **ESP32-S3**, a touch/sensing input, and a **WS2812B addressable RGB LED strip** can be combined to create an interactive lighting system.
+| Test | Expected Result |
+|---|---|
+| Short Touch | LED color changes |
+| Long Touch ≥ 1 second | Rainbow animation starts |
+| Double Touch within 800 ms | LED strip turns ON/OFF |
+| Light Touch | Improved touch detection |
+| Power ON | Current LED color is displayed |
+| Power OFF | All LEDs turn OFF |
 
-The touch input provides a simple human interface, while the ESP32 processes the sensor readings and controls the RGB LED strip in real time.
+The touch sensitivity was increased using:
+
+~~~python
+threshold = baseline * 0.20 + 2000
+~~~
+
+---
+
+## 19. Result
+
+The **Touch-Controlled RGB LED Strip using Digicomp ESP32-S3 Dev Board** was successfully implemented and tested.
+
+The system successfully:
+
+- Detects touch input through GPIO 14.
+- Controls 30 WS2812B LEDs through GPIO 4.
+- Changes color using a short touch.
+- Activates rainbow animation using a long touch.
+- Turns the LED strip ON/OFF using a double touch.
+- Performs automatic touch calibration.
+- Uses an increased touch sensitivity threshold.
+- Supports brightness control.
+- Provides multiple predefined RGB colors.
+
+The final MicroPython program was successfully flashed to the Digicomp ESP32-S3 Dev Board and tested.
+
+---
+
+## 20. Advantages
+
+- Simple touch-based control
+- No physical buttons required
+- Multiple functions using different touch actions
+- Automatic touch calibration
+- Increased touch sensitivity
+- Multiple predefined colors
+- Rainbow animation
+- Brightness control
+- Compact and easy to use
+- Easy to modify and extend
+- Suitable for DIY electronics projects
+
+---
+
+## 21. Applications
+
+This project can be used for:
+
+- Smart lighting
+- Decorative lighting
+- Room lighting
+- Interactive LED displays
+- DIY electronics projects
+- Touch-based IoT systems
+- Smart home lighting
+- Educational electronics projects
+- Interactive lighting systems
+
+---
+
+## 22. Conclusion
+
+The **Touch-Controlled RGB LED Strip using Digicomp ESP32-S3 Dev Board** demonstrates how an Digicomp ESP32-S3 Dev Board can be used with a WS2812B addressable RGB LED strip and touch input to create an interactive lighting system.
+
+The project provides three main touch-based controls:
+
+- **Short Touch → Change Color**
+- **Long Touch → Rainbow Animation**
+- **Double Touch → ON/OFF**
+
+Automatic calibration and increased touch sensitivity improve the reliability of touch detection.
+
+The project was successfully implemented using **MicroPython, Digicomp ESP32-S3 Dev Board, WS2812B LEDs, and touch sensing**, and the final program was successfully tested and flashed to the Digicomp ESP32-S3 Dev Board.
