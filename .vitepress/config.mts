@@ -9,7 +9,8 @@ export default defineConfig({
   base,
   srcExclude: ['**/README.md'],
   appearance: {
-    initialValue: undefined, // undefined = not default: `dark`
+    // @ts-expect-error not supported
+    initialValue: 'light',
   },
   themeConfig: {
     logo: '/digicomp.svg',
