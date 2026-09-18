@@ -8,8 +8,19 @@ export default defineConfig({
   lang: 'en-US',
   base,
   srcExclude: ['**/README.md'],
+  appearance: {
+    initialValue: undefined, // undefined = not default: `dark`
+  },
   themeConfig: {
-    nav: [{ text: 'Documentation', link: '/boards/' }],
+    logo: '/digicomp.svg',
+    siteTitle: false,
+    nav: [ {
+      text: '🛒 Store',
+      link: 'https://digicomp.app'
+    }, {
+      text: 'Documentation',
+      link: '/boards/'
+    }],
     sidebar: {
       '/boards/esp32-s3/': [
         {
