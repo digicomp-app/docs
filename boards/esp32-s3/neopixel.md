@@ -716,3 +716,6 @@ The project provides three main touch-based controls:
 Automatic calibration and increased touch sensitivity improve the reliability of touch detection.
 
 The project was successfully implemented using **MicroPython, Digicomp ESP32-S3 Dev Board, WS2812B LEDs, and touch sensing**, and the final program was successfully tested and flashed to the Digicomp ESP32-S3 Dev Board.
+
+## credits
+- Author: Sristi Shetty K
