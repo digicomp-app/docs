@@ -9,4 +9,6 @@ Explore documentation and practical projects for your Digicomp ESP32-S3 developm
 
 ## Examples
 
-- [Touch-controlled RGB LED strip](/boards/esp32-s3/neopixel)
+- [LED Blink Example](/boards/esp32-s3/blink)
+- [Touch-controlled RGB LED](/boards/esp32-s3/neopixel)
+- [LDR based Servo Control](/boards/esp32-s3/ldr)

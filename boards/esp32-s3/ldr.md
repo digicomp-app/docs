@@ -1,14 +1,10 @@
-# Light-Controlled Servo Motor & Dynamic LED System
-
+---
+title: Light-Controlled Servo
 ---
 
-## 1. Project Title
+# Light-Controlled Servo Motor and Dynamic LED
 
-**Light-Controlled Servo Motor and Dynamic LED System using ESP32-S3 Dev Board**
-
----
-
-## 2. Project Overview
+## Project Overview
 
 This project uses an **Digicomp ESP32-S3 Dev Board** to automate a hardware system comprising an **LDR Light Sensor Module**, an **onboard LED**, and a **9g micro servo motor (DXW90 / SG90)**.
 
@@ -19,7 +15,7 @@ The system performs two main real-time functions based on ambient light levels:
 
 ---
 
-## 3. Hardware Components
+## Hardware Components
 
 - ESP32-S3 Dev Board-WROOM
 - LDR Light Sensor Module (4-pin with potentiometer)
@@ -31,7 +27,7 @@ The system performs two main real-time functions based on ambient light levels:
 
 ---
 
-## 4. Pin Connections
+## Pin Connections
 
 | Component             | Pin Label              | ESP32-S3 Dev Board Pin | Notes / Function              |
 | --------------------- | ---------------------- | ---------------------- | ----------------------------- |
@@ -56,7 +52,7 @@ The system performs two main real-time functions based on ambient light levels:
 
 ---
 
-## 5. Software & Environment Setup
+## Software & Environment Setup
 
 - **MicroPython Firmware:** Flashed onto the ESP32-S3
 - **Command Line Tool:** `mpremote` (invoked via `python -m mpremote`)
@@ -66,15 +62,15 @@ The system performs two main real-time functions based on ambient light levels:
 
 ---
 
-## 6. How the Project Works
+## How the Project Works
 
 The system operates in three main functional phases:
 
-### 6.1 Light Sensing (ADC & Digital Reads)
+### Light Sensing (ADC & Digital Reads)
 
 The LDR module's **Analog Output (AO)** is connected to **GPIO 4**. The ESP32-S3 uses a 12-bit Analog-to-Digital Converter (ADC) with 11dB attenuation ($0\text{V} - 3.3\text{V}$ range) to read values from `0` (Brightest) to `4095` (Darkest).
 
-### 6.2 Dynamic LED Brightness Scaling
+### Dynamic LED Brightness Scaling
 
 The **onboard LED** on **GPIO 2** is driven using PWM at `500 Hz`. The raw ADC value from the LDR module is mapped directly to a 16-bit PWM duty cycle (`0` to `65535`):
 
@@ -82,7 +78,7 @@ $$\text{Duty Cycle} = \left(\frac{\text{Raw ADC}}{4095}\right) \times 65535$$
 
 As ambient light decreases (higher ADC value), the LED duty cycle increases, making the LED shine brighter.
 
-### 6.3 Servo Motor Position Control
+### Servo Motor Position Control
 
 The **9g micro servo** on **GPIO 6** is driven using a `50 Hz` PWM frequency ($20\text{ ms}$ period). The pulse width is mapped between $0.5\text{ ms}$ (Duty ~1638) for $0^\circ$ and $2.5\text{ ms}$ (Duty ~8192) for $180^\circ$.
 
@@ -90,7 +86,7 @@ When ambient darkness crosses the defined threshold (`DARK_THRESHOLD = 2000`), t
 
 ---
 
-## 7. Complete MicroPython Program (`main.py`)
+## Complete MicroPython Program (`main.py`)
 
 ```python
 
@@ -193,7 +189,7 @@ except KeyboardInterrupt:
 
 ---
 
-## 8. Working Flow Chart
+## Working Flow Chart
 
 ```text
        ESP32-S3 Boots Up & Initializes MicroPython
@@ -223,7 +219,7 @@ Apply PWM to GPIO 2                     ┌──────┴─────�
 
 ---
 
-## 9. Deployment Instructions (via `cmd` & `mpremote`)
+## Deployment Instructions (via `cmd` & `mpremote`)
 
 1. **Upload `main.py` to ESP32-S3:**
 
@@ -248,7 +244,7 @@ python -m mpremote connect COM8 repl
 
 ---
 
-## 10. Verification Matrix
+## Verification Matrix
 
 | Test Scenario        | Action                      | Expected Hardware Response                                        | Expected Output Stream              |
 | -------------------- | --------------------------- | ----------------------------------------------------------------- | ----------------------------------- |
@@ -259,10 +255,6 @@ python -m mpremote connect COM8 repl
 
 ---
 
-## 11. Conclusion
+## Conclusion
 
 The **Light-Controlled Servo Motor and Dynamic LED System** demonstrates real-time closed-loop control using an **ESP32-S3**, **LDR Light Sensor**, **onboard LED**, and a **9g servo motor**. MicroPython's hardware abstraction layer allows seamless management of multi-channel PWM output and ADC inputs concurrently.
-
-## Credits:
-
-- Author: Poojith Nirmal

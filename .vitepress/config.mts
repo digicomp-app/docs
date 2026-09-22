@@ -1,13 +1,24 @@
 import { defineConfig } from 'vitepress'
+import { GitChangelog, GitChangelogMarkdownSection } from '@nolebase/vitepress-plugin-git-changelog/vite'
+import { withSidebar } from 'vitepress-sidebar'
 
 const base = process.env.DOCS_BASE || '/'
 
-export default defineConfig({
+const vitePressConfig = {
   title: 'Digicomp Technologies',
   description: 'Development board documentation',
   lang: 'en-US',
   base,
   srcExclude: ['**/README.md'],
+  lastUpdated: true,
+  vite: {
+    plugins: [
+      GitChangelog({
+        repoURL: 'https://github.com/digicomp-app/docs'
+      }),
+      GitChangelogMarkdownSection()
+    ]
+  },
   appearance: {
     // @ts-expect-error not supported
     initialValue: 'light',
@@ -22,19 +33,12 @@ export default defineConfig({
       text: 'Documentation',
       link: '/boards/'
     }],
-    sidebar: {
-      '/boards/esp32-s3/': [
-        {
-          text: 'ESP32-S3',
-          items: [
-            { text: 'Overview', link: '/boards/esp32-s3/' },
-            { text: 'Touch-controlled RGB LED strip', link: '/boards/esp32-s3/neopixel' }
-          ]
-        }
-      ],
-      '/boards/': [
-        { text: 'Development boards', items: [{ text: 'All boards', link: '/boards/' }] }
-      ]
+    editLink: {
+      pattern: 'https://github.com/digicomp-app/docs/edit/main/:path',
+      text: 'Edit this page on GitHub'
+    },
+    lastUpdated: {
+      text: 'Last updated'
     },
     footer: {
       message: 'Made in India',
@@ -42,4 +46,15 @@ export default defineConfig({
     },
     search: { provider: 'local' }
   }
-})
+}
+
+export default defineConfig(withSidebar(vitePressConfig, {
+  documentRootPath: '.',
+  collapsed: false,
+  includeRootIndexFile: false,
+  useTitleFromFileHeading: true,
+  useTitleFromFrontmatter: true,
+  useFolderTitleFromIndexFile: true,
+  useFolderLinkFromIndexFile: true,
+  sortMenusByName: true
+}))

@@ -1,5 +1,5 @@
 ---
-title: Development Boards
+title: Dev Boards
 ---
 
 # Development Boards

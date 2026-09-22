@@ -11,7 +11,10 @@
     "docs:check": "vitepress build . --debug"
   },
   "devDependencies": {
-    "vitepress": "2.0.0-alpha.20"
+    "@nolebase/ui": "^2.18.2",
+    "@nolebase/vitepress-plugin-git-changelog": "^2.18.2",
+    "vitepress": "2.0.0-alpha.20",
+    "vitepress-sidebar": "^1.40.0"
   },
   "engines": {
     "node": ">=22"

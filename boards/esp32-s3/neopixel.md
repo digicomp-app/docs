@@ -1,12 +1,10 @@
-# Touch-Controlled RGB LED Strip
-
-## 1. Project Title
-
-**Touch-Controlled RGB LED Strip using Digicomp ESP32-S3 Dev Board**
-
+---
+title: Touch-Controlled RGB LED
 ---
 
-## 2. Project Overview
+# Touch-Controlled RGB LED Strip
+
+## Project Overview
 
 This project uses an **Digicomp ESP32-S3 Dev Board** to control a **WS2812B addressable RGB LED strip** using a touch/sensing input.
 
@@ -20,7 +18,7 @@ The program also performs automatic touch calibration and uses an increased touc
 
 ---
 
-## 3. Hardware Components
+## Hardware Components
 
 - Digicomp ESP32-S3 Dev Board-WROOM
 - WS2812B RGB LED strip
@@ -32,7 +30,7 @@ The program also performs automatic touch calibration and uses an increased touc
 
 ---
 
-## 4. Pin Connections
+## Pin Connections
 
 | Component | Digicomp ESP32-S3 Dev Board Pin |
 |---|---|
@@ -50,7 +48,7 @@ The program also performs automatic touch calibration and uses an increased touc
 
 ---
 
-## 5. Software Used
+## Software Used
 
 - MicroPython
 - VS Code
@@ -61,7 +59,7 @@ The program also performs automatic touch calibration and uses an increased touc
 
 ---
 
-## 6. How the Project Works
+## How the Project Works
 
 The project has three main parts:
 
@@ -69,7 +67,7 @@ The project has three main parts:
 2. Touch/sensing input
 3. Touch-based control actions
 
-### 6.1 RGB LED Control
+### RGB LED Control
 
 The WS2812B LED strip is connected to **GPIO 4**.
 
@@ -81,7 +79,7 @@ NUM_LEDS = 30
 
 ---
 
-### 6.2 Touch/Sensing Input
+### Touch/Sensing Input
 
 The touch/sensing input is connected to **GPIO 14**.
 
@@ -107,7 +105,7 @@ The average value is stored as the **baseline**.
 
 ---
 
-### 6.3 Touch Sensitivity
+### Touch Sensitivity
 
 The touch sensitivity is increased using the following threshold:
 
@@ -133,7 +131,7 @@ This allows the system to detect lighter touches more easily.
 
 ---
 
-## 7. LED Colors
+## LED Colors
 
 The program contains six predefined colors:
 
@@ -161,7 +159,7 @@ The current color is selected using `color_index`.
 
 ---
 
-## 8. Brightness Control
+## Brightness Control
 
 The program uses a brightness value of:
 
@@ -181,7 +179,7 @@ This allows the LED brightness to be controlled through the program.
 
 ---
 
-## 9. Short Touch Operation
+## Short Touch Operation
 
 A short touch is detected when the touch duration is **less than 1 second**.
 
@@ -206,7 +204,7 @@ After the last color, the program returns to the first color.
 
 ---
 
-## 10. Long Touch Operation
+## Long Touch Operation
 
 A long touch is detected when the touch duration is **1 second or more**.
 
@@ -228,7 +226,7 @@ rainbow()
 
 ---
 
-## 11. Double Touch Operation
+## Double Touch Operation
 
 The program detects two short touches within approximately **800 milliseconds**.
 
@@ -252,7 +250,7 @@ The LED strip is either turned ON or OFF.
 
 ---
 
-## 12. LED ON/OFF Control
+## LED ON/OFF Control
 
 The LED power state is stored using:
 
@@ -292,7 +290,7 @@ def toggle_power():
 
 ---
 
-## 13. Rainbow Animation
+## Rainbow Animation
 
 The rainbow animation is generated using a loop:
 
@@ -313,7 +311,7 @@ The rainbow animation continues while the LED strip is powered ON.
 
 ---
 
-## 14. Touch Duration Detection
+## Touch Duration Detection
 
 The program measures how long the touch sensor is activated.
 
@@ -350,7 +348,7 @@ The duration determines whether the action is:
 
 ---
 
-## 15. Complete MicroPython Program
+## Complete MicroPython Program
 
 The complete program used in `main.py` is:
 
@@ -579,7 +577,7 @@ while True:
 
 ---
 
-## 16. Working Flow
+## Working Flow
 
 ~~~text
 Digicomp ESP32-S3 Dev Board Starts
@@ -614,7 +612,7 @@ Repeat
 
 ---
 
-## 17. Program Execution
+## Program Execution
 
 The project was developed and tested using **VS Code** with the **MicroPico extension**.
 
@@ -632,7 +630,7 @@ The project was developed and tested using **VS Code** with the **MicroPico exte
 
 ---
 
-## 18. Testing
+## Testing
 
 | Test | Expected Result |
 |---|---|
@@ -651,7 +649,7 @@ threshold = baseline * 0.20 + 2000
 
 ---
 
-## 19. Result
+## Result
 
 The **Touch-Controlled RGB LED Strip using Digicomp ESP32-S3 Dev Board** was successfully implemented and tested.
 
@@ -671,7 +669,7 @@ The final MicroPython program was successfully flashed to the Digicomp ESP32-S3 
 
 ---
 
-## 20. Advantages
+## Advantages
 
 - Simple touch-based control
 - No physical buttons required
@@ -687,7 +685,7 @@ The final MicroPython program was successfully flashed to the Digicomp ESP32-S3 
 
 ---
 
-## 21. Applications
+## Applications
 
 This project can be used for:
 
@@ -703,7 +701,7 @@ This project can be used for:
 
 ---
 
-## 22. Conclusion
+## Conclusion
 
 The **Touch-Controlled RGB LED Strip using Digicomp ESP32-S3 Dev Board** demonstrates how an Digicomp ESP32-S3 Dev Board can be used with a WS2812B addressable RGB LED strip and touch input to create an interactive lighting system.
 
