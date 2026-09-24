@@ -1,382 +1,669 @@
 ---
-title: Command Guide
+title: Analog Clock
 ---
 
 
-# ESP32 MicroPython Setup & mpremote / esptool Command Reference
 
-*Compatible with all MicroPython-Supported Digicomp Boards*
+# Analog Clock on a ST7789 LCD using RAM Framebuffer
 
-## Install Tools
+*Using Digicomp ESP32-S3 Dev board and MicroPython*
 
-**Install mpremote**
+## Project Title
 
-```cmd
-pip install mpremote
-```
+Analog Clock on ST7789 LCD
 
-➡️ Installs the tool used to communicate with and control MicroPython boards.
+## Objective
 
-> Note: `py -m ` usually isn't needed before `pip install`. If the plain command above doesn't work (e.g. `pip` isn't recognized), try prefixing it: `py -m pip install mpremote`.
+The objective of this project was to draw a live analog clock face — hour, minute, and second hands — on a Waveshare 1.69-inch, 240 × 280 ST7789 Touch LCD, driven by a Digicomp ESP32-S3 Dev board over SPI using MicroPython.
 
-```cmd
-py -m mpremote --help
-```
+Instead of drawing shapes directly to the display, the entire clock face is built each tick inside a RAM framebuffer using MicroPython's framebuf module, and only the finished frame is pushed to the LCD in one SPI transfer. Time is read from the ESP32's onboard RTC.
 
-➡️ Shows all available `mpremote` commands.
+## Hardware Used
 
-**Install esptool**
+| Component | Details |
+| --- | --- |
+| Microcontroller | Digicomp ESP32-S3 Dev board |
+| Display | Waveshare 1.69-inch TFT LCD ST7789 |
+| Resolution | 240 × 280 pixels |
+| Programming Language | MicroPython |
 
-```cmd
-pip install esptool
-```
 
-➡️ Installs Espressif's tool for communicating with ESP32 chips and flashing firmware.
+## Hardware Connections
 
-> If the plain command above doesn't work, try prefixing it: `py -m pip install esptool`.
+| Waveshare LCD | Digicomp ESP32-S3 | Function |
+| --- | --- | --- |
+| VCC | 3.3V | Power |
+| GND | GND | Ground |
+| DIN / MOSI | GPIO 7 | SPI data |
+| CLK / SCLK | GPIO 6 | SPI clock |
+| CS | GPIO 5 | Chip select |
+| DC | GPIO 8 | Data/Command |
+| RST | GPIO 15 | LCD reset |
+| BL | GPIO 4 | Backlight |
 
-```cmd
-py -m esptool version
-```
-
-➡️ Shows the installed `esptool` version.
-
-## Connect & Check the ESP32
-
-**Connect Your ESP32**
-
-Plug the ESP32 into USB and find its COM port, for example:
-
-```text
-COM6
-```
-
-➡️ `COM6` is the Windows serial connection through which your PC talks to the ESP32.
-
-**Check the ESP32**
-
-```cmd
-py -m esptool --port COM6 chip-id
-```
-
-➡️ Asks the ESP32 which chip it is and verifies that communication is working.
-
-```cmd
-py -m esptool --port COM6 flash-id
-```
-
-➡️ Reads information about the ESP32's flash memory.
-
-## Erase & Flash MicroPython
-
-**Erase the ESP32**
-
-```cmd
-py -m esptool --port COM6 erase-flash
-```
-
-➡️ Completely erases the ESP32's flash memory.
-
-⚠️ This deletes the existing firmware/files.
-
-**Flash MicroPython**
-
-Suppose your firmware file is:
-
-```text
-ESP32_GENERIC.bin
-```
-
-Then:
-
-```cmd
-py -m esptool --port COM6 write-flash 0x1000 ESP32_GENERIC.bin
-```
-
-➡️ Writes the MicroPython firmware into the ESP32's flash memory.
-
-Note: The correct flash address depends on your board/firmware, so follow the firmware's instructions rather than assuming `0x1000` for every board.
-
-## REPL & Running Code
-
-**Open MicroPython REPL**
-
-```cmd
-py -m mpremote connect COM6 repl
-```
-
-➡️ Opens an interactive Python console running directly on the ESP32.
-
-You'll see:
-
-```text
->>>
-```
-
-Now type:
+## SPI Configuration
 
 ```python
-print("Hello ESP32")
+spi = SPI(
+    2,
+    baudrate=80000000,
+    polarity=0,
+    phase=0,
+    sck=Pin(6),
+    mosi=Pin(7)
+)
 ```
 
-➡️ Runs Python code directly on the ESP32.
+The same 80 MHz high-speed SPI setup from the high-speed  display was reused, since a full-screen clock frame (134,400 bytes) needs to be transferred every second.
 
-**Open REPL Again**
+## RAM Framebuffer Technique
 
-```cmd
-py -m mpremote connect COM6 repl
+The core idea is to treat a bytearray in RAM as the entire screen, draw the whole clock into it using framebuf, and only then send it to the LCD as one block — instead of issuing individual SPI commands per shape.
+
+```
+Allocate RGB565 buffer (240 × 280 × 2 bytes)
+        ↓
+Wrap buffer in a framebuf.FrameBuffer object
+        ↓
+Each tick: clear buffer, draw face + hands into RAM
+        ↓
+Set LCD window to full screen (once)
+        ↓
+Send entire buffer over SPI in one write
+        ↓
+Repeat every second
 ```
 
-➡️ Opens the Python console so you can see output and interact with the ESP32.
+This keeps flicker to a minimum and avoids the overhead of setting the LCD address window for every line or pixel, since the whole 240 × 280 frame is composited in memory first.
 
-**REPL Shortcut**
-
-```cmd
-py -m mpremote connect COM6 repl
-```
-
-➡️ Gives you direct interactive control over the ESP32.
-
-Inside it:
+The framebuffer is allocated once at startup:
 
 ```python
-import machine
+buffer = bytearray(WIDTH * HEIGHT * 2)
+
+fb = framebuf.FrameBuffer(
+    buffer,
+    WIDTH,
+    HEIGHT,
+    framebuf.RGB565
+)
 ```
 
-➡️ Loads MicroPython's hardware-control module.
+## Drawing the Clock Face
+
+Everything below is drawn into RAM only — nothing reaches the LCD until show() is called.
+
+- **Circle primitive** — the framebuf build in use has no built-in circle(), so a midpoint-circle algorithm is implemented manually (circle(cx, cy, r, color)), plotting 8 symmetric points per step.
+- **Face** — three concentric circles (outer rim, ring, inner face) are drawn at the clock center (120, 140), radius 115.
+- **Minute markers** — all 60 tick marks are drawn around the dial using trigonometry (math.cos / math.sin); every 5th marker (the hour marks) is drawn longer and in white, the rest shorter and gray.
+- **Hands** — hour, minute, and second hands are drawn as lines from the center (fb.line) at angles computed from the current time:
+  - Hour hand: hour % 12 * 30 + minute * 0.5 degrees, length 62, white
+  - Minute hand: minute * 6 + second * 0.1 degrees, length 88, cyan
+  - Second hand: second * 6 degrees, length 100, red, with a short red counterweight on the opposite side
+- **Center hub** — a small red square with a white square on top (fb.fill_rect) caps the hand pivot.
+
+## Result
+
+The Digicomp ESP32-S3 Dev board successfully renders a smooth, flicker-free analog clock on the Waveshare ST7789 LCD, with the face, 60 minute markers, and three moving hands all composited in RAM each second and pushed to the display in one high-speed SPI transfer.
+
+The implementation demonstrated:
+
+- RAM framebuffer graphics using framebuf.FrameBuffer
+- A custom circle-drawing algorithm
+- Trigonometric hand/marker positioning
+- Live time from the onboard RTC
+- Full-frame, single-transfer SPI updates at 80 MHz
+- Redraw-on-change logic to minimize unnecessary SPI traffic
+
+## Conclusion
+
+This project extends the earlier  text-display work into full graphics: rather than drawing individual shapes directly to the LCD, the complete scene is first composed in a RAM framebuffer and then blitted to the display in one transfer. The same wiring, SPI configuration, and windowing routine carry over unchanged, showing that the RAM-buffered approach scales cleanly from static text to a continuously updating analog display.
+
+## Appendix: Complete Source Code
 
 ```python
-print(machine.freq())
+from machine import Pin, SPI, RTC
+import framebuf
+import time
+import math
+import gc
+
+
+# ============================================================
+# ESP32-S3 + Waveshare 1.69" ST7789
+# 240 x 280
+#
+# SAME WIRING
+#
+# SCK  -> GPIO 6
+# MOSI -> GPIO 7
+# CS   -> GPIO 5
+# DC   -> GPIO 8
+# RST  -> GPIO 15
+# BL   -> GPIO 4
+# ============================================================
+
+WIDTH = 240
+HEIGHT = 280
+
+
+# ============================================================
+# SPI
+# ============================================================
+
+spi = SPI(
+    2,
+    baudrate=80000000,
+    polarity=0,
+    phase=0,
+    sck=Pin(6),
+    mosi=Pin(7)
+)
+
+cs = Pin(5, Pin.OUT, value=1)
+dc = Pin(8, Pin.OUT)
+rst = Pin(15, Pin.OUT)
+bl = Pin(4, Pin.OUT, value=1)
+
+
+# ============================================================
+# LCD COMMAND
+# ============================================================
+
+def cmd(c):
+    cs.value(0)
+    dc.value(0)
+    spi.write(bytes([c]))
+    cs.value(1)
+
+
+def data(d):
+    cs.value(0)
+    dc.value(1)
+    spi.write(d)
+    cs.value(1)
+
+
+# ============================================================
+# LCD WINDOW
+# ============================================================
+
+def set_window(x0, y0, x1, y1):
+
+    cmd(0x2A)
+
+    data(bytes([
+        x0 >> 8,
+        x0 & 255,
+        x1 >> 8,
+        x1 & 255
+    ]))
+
+    cmd(0x2B)
+
+    # Waveshare vertical offset
+    y0 += 20
+    y1 += 20
+
+    data(bytes([
+        y0 >> 8,
+        y0 & 255,
+        y1 >> 8,
+        y1 & 255
+    ]))
+
+    cmd(0x2C)
+
+
+# ============================================================
+# LCD RESET
+# ============================================================
+
+rst.value(1)
+time.sleep_ms(100)
+
+rst.value(0)
+time.sleep_ms(100)
+
+rst.value(1)
+time.sleep_ms(150)
+
+
+# ============================================================
+# ST7789 INITIALIZATION
+# ============================================================
+
+cmd(0x01)
+time.sleep_ms(150)
+
+cmd(0x11)
+time.sleep_ms(150)
+
+cmd(0x3A)
+data(b'\x55')
+
+cmd(0x36)
+data(b'\x00')
+
+cmd(0x21)
+
+cmd(0x13)
+
+cmd(0x29)
+time.sleep_ms(100)
+
+
+# ============================================================
+# RAM FRAMEBUFFER
+# ============================================================
+
+gc.collect()
+
+print("Free RAM before framebuffer:", gc.mem_free())
+
+# RGB565
+# 240 × 280 × 2 = 134400 bytes
+
+buffer = bytearray(
+    WIDTH * HEIGHT * 2
+)
+
+# MicroPython framebuffer object
+fb = framebuf.FrameBuffer(
+    buffer,
+    WIDTH,
+    HEIGHT,
+    framebuf.RGB565
+)
+
+gc.collect()
+
+print("Framebuffer:", len(buffer), "bytes")
+print("Free RAM after framebuffer:", gc.mem_free())
+
+
+# ============================================================
+# COLORS
+# ============================================================
+
+BLACK  = 0x0000
+WHITE  = 0xFFFF
+RED    = 0xF800
+CYAN   = 0x07FF
+GRAY   = 0x8410
+DARK   = 0x2104
+YELLOW = 0xFFE0
+
+
+# ============================================================
+# CLOCK CENTER
+# ============================================================
+
+CX = 120
+CY = 140
+
+R = 115
+
+
+# ============================================================
+# CIRCLE
+# We implement our own because your framebuf build
+# doesn't provide FrameBuffer.circle()
+# ============================================================
+
+def circle(cx, cy, r, color):
+
+    x = r
+    y = 0
+    d = 1 - r
+
+    while x >= y:
+
+        fb.pixel(cx + x, cy + y, color)
+        fb.pixel(cx + y, cy + x, color)
+        fb.pixel(cx - y, cy + x, color)
+        fb.pixel(cx - x, cy + y, color)
+
+        fb.pixel(cx - x, cy - y, color)
+        fb.pixel(cx - y, cy - x, color)
+        fb.pixel(cx + y, cy - x, color)
+        fb.pixel(cx + x, cy - y, color)
+
+        y += 1
+
+        if d <= 0:
+
+            d += 2 * y + 1
+
+        else:
+
+            x -= 1
+            d += 2 * (y - x) + 1
+
+
+# ============================================================
+# DRAW CLOCK FACE INTO RAM
+# ============================================================
+
+def draw_face():
+
+    # --------------------------------------------------------
+    # CLEAR RAM BUFFER
+    # --------------------------------------------------------
+
+    fb.fill(BLACK)
+
+    # --------------------------------------------------------
+    # OUTER CIRCLE
+    # --------------------------------------------------------
+
+    circle(
+        CX,
+        CY,
+        R,
+        WHITE
+    )
+
+    # --------------------------------------------------------
+    # SECOND CIRCLE
+    # --------------------------------------------------------
+
+    circle(
+        CX,
+        CY,
+        R - 2,
+        GRAY
+    )
+
+    # --------------------------------------------------------
+    # INNER CIRCLE
+    # --------------------------------------------------------
+
+    circle(
+        CX,
+        CY,
+        R - 7,
+        DARK
+    )
+
+    # --------------------------------------------------------
+    # 60 MINUTE MARKERS
+    # --------------------------------------------------------
+
+    for i in range(60):
+
+        angle = math.radians(
+            i * 6 - 90
+        )
+
+        if i % 5 == 0:
+
+            r1 = R - 18
+            r2 = R - 7
+
+            color = WHITE
+
+        else:
+
+            r1 = R - 11
+            r2 = R - 7
+
+            color = GRAY
+
+        x1 = int(
+            CX + math.cos(angle) * r1
+        )
+
+        y1 = int(
+            CY + math.sin(angle) * r1
+        )
+
+        x2 = int(
+            CX + math.cos(angle) * r2
+        )
+
+        y2 = int(
+            CY + math.sin(angle) * r2
+        )
+
+        fb.line(
+            x1,
+            y1,
+            x2,
+            y2,
+            color
+        )
+
+
+# ============================================================
+# DRAW CLOCK HAND
+# ============================================================
+
+def draw_hand(angle, length, color):
+
+    rad = math.radians(
+        angle - 90
+    )
+
+    x = int(
+        CX + math.cos(rad) * length
+    )
+
+    y = int(
+        CY + math.sin(rad) * length
+    )
+
+    fb.line(
+        CX,
+        CY,
+        x,
+        y,
+        color
+    )
+
+
+# ============================================================
+# DRAW COMPLETE FRAME INTO RAM
+# ============================================================
+
+def draw_clock(hour, minute, second):
+
+    # Everything below happens in RAM.
+    # Nothing is sent to the LCD yet.
+
+    draw_face()
+
+    # --------------------------------------------------------
+    # HOUR HAND
+    # --------------------------------------------------------
+
+    hour_angle = (
+        (hour % 12) * 30
+        + minute * 0.5
+    )
+
+    draw_hand(
+        hour_angle,
+        62,
+        WHITE
+    )
+
+    # --------------------------------------------------------
+    # MINUTE HAND
+    # --------------------------------------------------------
+
+    minute_angle = (
+        minute * 6
+        + second * 0.1
+    )
+
+    draw_hand(
+        minute_angle,
+        88,
+        CYAN
+    )
+
+    # --------------------------------------------------------
+    # SECOND HAND
+    # --------------------------------------------------------
+
+    second_angle = second * 6
+
+    rad = math.radians(
+        second_angle - 90
+    )
+
+    sx = int(
+        CX + math.cos(rad) * 100
+    )
+
+    sy = int(
+        CY + math.sin(rad) * 100
+    )
+
+    fb.line(
+        CX,
+        CY,
+        sx,
+        sy,
+        RED
+    )
+
+    # Counterweight
+
+    bx = int(
+        CX - math.cos(rad) * 18
+    )
+
+    by = int(
+        CY - math.sin(rad) * 18
+    )
+
+    fb.line(
+        CX,
+        CY,
+        bx,
+        by,
+        RED
+    )
+
+    # --------------------------------------------------------
+    # CENTER
+    # --------------------------------------------------------
+
+    fb.fill_rect(
+        CX - 4,
+        CY - 4,
+        9,
+        9,
+        RED
+    )
+
+    fb.fill_rect(
+        CX - 2,
+        CY - 2,
+        5,
+        5,
+        WHITE
+    )
+
+
+# ============================================================
+# SEND RAM BUFFER TO LCD
+# ============================================================
+
+def show():
+
+    # Tell ST7789 that the following data belongs
+    # to the entire 240 x 280 display.
+
+    set_window(
+        0,
+        0,
+        239,
+        279
+    )
+
+    # Send framebuffer
+    cs.value(0)
+    dc.value(1)
+
+    spi.write(buffer)
+
+    cs.value(1)
+
+
+# ============================================================
+# RTC
+# ============================================================
+
+rtc = RTC()
+
+
+# ============================================================
+# OPTIONAL TIME SETTING
+# ============================================================
+
+# If your RTC is not already correct, set it once:
+#
+# rtc.datetime(
+#     (2026, 9, 19, 5, 13, 50, 0, 0)
+# )
+
+
+# ============================================================
+# CLOCK
+# ============================================================
+
+last_second = -1
+
+print("RAM framebuffer analog clock")
+print("Starting...")
+
+
+while True:
+
+    now = rtc.datetime()
+
+    hour = now[4]
+    minute = now[5]
+    second = now[6]
+
+    # Only create a new frame when time changes
+
+    if second != last_second:
+
+        last_second = second
+
+        # ====================================================
+        # STEP 1
+        # Draw EVERYTHING into RAM
+        # ====================================================
+
+        draw_clock(
+            hour,
+            minute,
+            second
+        )
+
+        # ====================================================
+        # STEP 2
+        # Send RAM framebuffer to LCD
+        # ====================================================
+
+        show()
+
+        print(
+            "{:02d}:{:02d}:{:02d}".format(
+                hour,
+                minute,
+                second
+            )
+        )
+
+    time.sleep_ms(20)
 ```
-
-➡️ Displays the ESP32 CPU frequency.
-
-```python
-import os
-print(os.listdir())
-```
-
-➡️ Displays files stored on the ESP32.
-
-**Run a PC File Directly**
-
-Suppose you have:
-
-```text
-lcd.py
-```
-
-Run:
-
-```cmd
-py -m mpremote connect COM6 run lcd.py
-```
-
-➡️ Sends `lcd.py` from your PC to the ESP32 and executes it without permanently copying it.
-
-This is different from `fs cp`, because `run` is mainly for testing/executing the local file.
-
-**Execute a Single Command**
-
-```cmd
-py -m mpremote connect COM6 exec "print('Hello')"
-```
-
-➡️ Sends that Python command to the ESP32 and executes it.
-
-For example:
-
-```cmd
-py -m mpremote connect COM6 exec "import os; print(os.listdir())"
-```
-
-➡️ Imports the filesystem module and prints the ESP32's files.
-
-## Files on the ESP32
-
-**Check ESP32 Files**
-
-```cmd
-py -m mpremote connect COM6 fs ls
-```
-
-➡️ Lists the files currently stored in the ESP32's MicroPython filesystem.
-
-For example:
-
-```text
-boot.py
-main.py
-```
-
-**Create main.py**
-
-On your computer create:
-
-```text
-main.py
-```
-
-Put:
-
-```python
-print("Hello from ESP32")
-```
-
-➡️ This is the program MicroPython normally executes automatically after boot.
-
-**Upload main.py**
-
-```cmd
-py -m mpremote connect COM6 fs cp main.py :main.py
-```
-
-➡️ Copies `main.py` from your PC to the ESP32.
-
-Notice:
-
-```text
-main.py → :main.py
-PC          ESP32
-```
-
-The `:` means the destination is the ESP32 filesystem.
-
-**Copy a Library**
-
-```cmd
-py -m mpremote connect COM6 fs cp lcd.py :lcd.py
-```
-
-➡️ Copies your LCD library from the PC onto the ESP32.
-
-Then in Python:
-
-```python
-import lcd
-```
-
-➡️ Loads the `lcd.py` library from the ESP32.
-
-**Copy a Library into /lib**
-
-```cmd
-py -m mpremote connect COM6 fs cp lcd.py :lib/lcd.py
-```
-
-➡️ Places the library inside the ESP32's standard library directory.
-
-Your code can still use:
-
-```python
-import lcd
-```
-
-**Create/Use Directories**
-
-```cmd
-py -m mpremote connect COM6 fs ls
-```
-
-➡️ Lets you see directories such as `lib/`.
-
-For example:
-
-```text
-/
-├── boot.py
-├── main.py
-└── lib/
-    └── lcd.py
-```
-
-**Delete a File**
-
-```cmd
-py -m mpremote connect COM6 fs rm lcd.py
-```
-
-➡️ Deletes `lcd.py` from the ESP32.
-
-**Copy a File Back to Your PC**
-
-```cmd
-py -m mpremote connect COM6 fs cp :main.py main_backup.py
-```
-
-➡️ Copies `main.py` from the ESP32 to your computer as `main_backup.py`.
-
-Again:
-
-```text
-:main.py → main_backup.py
- ESP32          PC
-```
-
-## Reset the ESP32
-
-**Reset the ESP32**
-
-```cmd
-py -m mpremote connect COM6 reset
-```
-
-➡️ Restarts the ESP32, causing MicroPython to boot again.
-
-Because `main.py` exists, MicroPython executes it automatically.
-
-**Soft Reset**
-
-```cmd
-py -m mpremote connect COM6 soft-reset
-```
-
-➡️ Restarts the MicroPython interpreter without doing a full hardware reset.
-
-**Hard Reset**
-
-```cmd
-py -m mpremote connect COM6 reset
-```
-
-➡️ Resets/reboots the ESP32 hardware.
-
-## Packages (pip vs mip)
-
-**Install a MicroPython Package**
-
-```cmd
-py -m mpremote connect COM6 mip install PACKAGE_NAME
-```
-
-➡️ Downloads and installs a MicroPython-compatible package onto the ESP32.
-
-For example:
-
-```cmd
-py -m mpremote connect COM6 mip install umqtt.simple
-```
-
-➡️ Installs the MQTT library if that package is available through MicroPython's package system.
-
-**pip vs mip**
-
-**pip:**
-
-```cmd
-py -m pip install requests
-```
-
-➡️ Installs a package on your Windows PC.
-
-**mip:**
-
-```cmd
-py -m mpremote connect COM6 mip install PACKAGE_NAME
-```
-
-➡️ Installs a MicroPython-compatible package on your ESP32.
-
-Think: `pip` = PC Python, `mip` = MicroPython device.
 
 ---
+
+
