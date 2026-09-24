@@ -1,35 +1,37 @@
+---
+title: Text Display
+---
+
+
 # High-Speed Digicomp Text Display on a Waveshare 1.69-inch ST7789 LCD
 
-*Using DigiComp ESP32-S3 and MicroPython*
+*Using Digicomp ESP32-S3 Dev board and MicroPython*
 
-## 1. Project Title
+## Project Title
 
 Text Display on ST7789 LCD
 
-## 2. Objective
+## Objective
 
-The objective of this project was to interface a Waveshare 1.69-inch, 240 × 280 ST7789 TFT LCD with the DigiComp ESP32-S3 using SPI communication and display the word "Digicomp" in white on a black background.
+The objective of this project was to interface a Waveshare 1.69-inch, 240 × 280 ST7789 TFT LCD with the Digicomp ESP32-S3 Dev board using SPI communication and display the word "Digicomp" in white on a black background.
 
 The project used a RAM-buffered rendering technique in which the complete Digicomp image was first constructed in RAM and then transferred to the LCD using a single display window and large SPI data transfers.
 
-## 3. Hardware Used
+## Hardware Used
 
 | Component | Details |
 | --- | --- |
-| Microcontroller | DigiComp ESP32-S3 |
+| Microcontroller | Digicomp ESP32-S3 Dev board |
 | ESP32 Module | ESP32-S3-WROOM-1-N16R8 |
 | Display | Waveshare 1.69-inch TFT LCD |
 | Display Controller | ST7789 |
 | Resolution | 240 × 280 pixels |
-| Interface | SPI |
-| Color Format | RGB565, 16-bit |
-| Programming Language | MicroPython |
-| Firmware | MicroPython v1.29.0 |
-| Computer | Windows PC |
+| Programming Language | MicroPython v1.29.0  |
 
-## 4. LCD Connections
 
-| Waveshare LCD | DigiComp ESP32-S3 | Function |
+## LCD Connections
+
+| Waveshare LCD | Digicomp ESP32-S3 | Function |
 | --- | --- | --- |
 | VCC | 3.3V | Power |
 | GND | GND | Ground |
@@ -42,9 +44,9 @@ The project used a RAM-buffered rendering technique in which the complete Digico
 
 The touchscreen was not used during the "Digicomp" display test.
 
-## 5. SPI Configuration
+## SPI Configuration
 
-The DigiComp ESP32-S3 was configured to communicate with the ST7789 using SPI.
+The Digicomp ESP32-S3 Dev board was configured to communicate with the ST7789 using SPI.
 
 The high-speed test used an SPI clock of 80 MHz:
 
@@ -59,7 +61,7 @@ spi = SPI(
 )
 ```
 
-## 6. RAM-Based Rendering
+## RAM and Text Rendering
 
 Instead of drawing every pixel individually, the program generated the complete "Digicomp" bitmap in RAM.
 
@@ -79,7 +81,7 @@ Display Digicomp
 
 This avoids repeatedly setting the LCD address for every individual pixel.
 
-## 7. Text Rendering
+**Text Rendering**
 
 A 5 × 7 bitmap font was used for:
 
@@ -91,11 +93,11 @@ The characters were scaled and arranged horizontally.
 
 The final image was centered on the 240 × 280 LCD.
 
-White pixels used RGB565 `0xFFFF`, and the black background used `0x0000`.
+White pixels used RGB565 0xFFFF , and the black background used 0x0000.
 
-## 8. Result
+## Result
 
-The DigiComp ESP32-S3 successfully communicated with the Waveshare ST7789 LCD and displayed "Digicomp" in white on a black background.
+The Digicomp ESP32-S3 Dev board successfully communicated with the Waveshare ST7789 LCD and displayed "Digicomp" in white on a black background.
 
 The implementation demonstrated:
 
@@ -108,9 +110,9 @@ The implementation demonstrated:
 - Large-block SPI transfer
 - High-speed 80 MHz SPI operation
 
-## 9. Conclusion
+## Conclusion
 
-The project successfully demonstrated a RAM-buffered high-speed text display system using the DigiComp ESP32-S3 and Waveshare 1.69-inch ST7789 LCD.
+The project successfully demonstrated a RAM-buffered high-speed text display system using the DigiComp ESP32-S3  Dev board and Waveshare 1.69-inch ST7789 LCD.
 
 The main optimization was changing from pixel-by-pixel drawing to building the complete text image in RAM and transferring it to the LCD as a larger block. This provides a more efficient foundation for future graphics, animations, and touchscreen applications.
 
@@ -124,7 +126,7 @@ import time
 
 
 # ============================================================
-# DigiComp ESP32-S3
+# Digicomp ESP32-S3 Dev board
 # Waveshare 1.69" ST7789
 # 240 x 280
 # ============================================================
