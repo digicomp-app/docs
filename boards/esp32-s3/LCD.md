@@ -42,7 +42,6 @@ The project used a RAM-buffered rendering technique in which the complete Digico
 | RST | GPIO 15 | LCD reset |
 | BL | GPIO 4 | Backlight |
 
-The touchscreen was not used during the "Digicomp" display test.
 
 ## SPI Configuration
 
