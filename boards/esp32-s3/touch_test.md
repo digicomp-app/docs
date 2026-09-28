@@ -758,4 +758,4 @@ while True:
 
 ## 12. Conclusion
 
-The touch test shows that the Waveshare 1.69" ST7789 display and its CST816T touch controller work correctly with the ESP32-S3 in MicroPython. SPI at 80 MHz drives the display quickly, the I²C touch controller reports accurate coordinates, and the "one tap = one letter" logic gives a simple visual confirmation of the whole hardware chain.
+The touch test shows that the Waveshare 1.69" ST7789 display and its CST816T touch controller work correctly with the Digicomp ESP32-S3 dev board in MicroPython. SPI at 80 MHz drives the display quickly, the I²C touch controller reports accurate coordinates, and the "one tap = one letter" logic gives a simple visual confirmation of the whole hardware chain.
