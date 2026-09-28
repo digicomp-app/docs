@@ -11,7 +11,7 @@ title: Touch Test
 
 ##  Objective
 
-To verify that the capacitive touch panel and the ST7789 LCD of the Waveshare 1.69" touch display work together on an Digicomp ESP32-S3 dev board board. Each time the screen is touched, the program:
+To verify that the capacitive touch panel and the ST7789 LCD of the Waveshare 1.69" touch display work together on an Digicomp ESP32-S3 dev board. Each time the screen is touched, the program:
 
 1. Reads the touch coordinates from the CST816T controller over I²C.
 2. Draws the next letter of the alphabet (A → B → C → … → Z) in white at the touched position.
