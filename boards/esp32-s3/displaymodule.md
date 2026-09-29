@@ -1,12 +1,14 @@
 ---
-title: ESP32-S3 OLED Display Animation System
+title: OLED Display Animation
 ---
 
-# ESP32-S3 OLED Display Module & Text Animations
+# OLED Display Module & Text Animations
 
 ## Project Overview
 
 This project uses a **Digicomp ESP32-S3 Dev Board** to drive a **0.91-inch OLED Display Module (128x32 Resolution)** using the **I2C communication protocol**.
+
+<img src="/img/oled.webp" alt="OLED Animation" width="75%" style="margin: 2rem auto;">
 
 The system continuously renders dynamic text animations on the screen, including:
 
@@ -23,19 +25,12 @@ The system continuously renders dynamic text animations on the screen, including
 
 ## Pin Connections
 
-| Component          | OLED Pin Label | ESP32-S3 Dev Board Pin |
-| ------------------ | -------------- | ---------------------- |
-| **Display Module** | **VCC**        | **3.3V**               |
-| **Display module** | **GND**        | **GND**                |
-| **Display module** | **SDA**        | **GPIO 8**             |
-| **Display module** | **SCL**        | **GPIO 9**             |
-
-### Connection Summary
-
-- **OLED VCC → ESP32-S3 3.3V**
-- **OLED GND → ESP32-S3 GND**
-- **OLED SDA → ESP32-S3 GPIO 8**
-- **OLED SCL → ESP32-S3 GPIO 9**
+| OLED Pin Label | ESP32-S3 Dev Board Pin |
+| -------------- | ---------------------- |
+| **VCC**        | **3.3V**               |
+| **GND**        | **GND**                |
+| **SDA**        | **GPIO 8**             |
+| **SCL**        | **GPIO 9**             |
 
 ## Software & Environment Setup
 
@@ -137,16 +132,6 @@ void loop() {
 }
 ```
 
-## Verification Matrix
-
-| Test Scenario         | Action                   | Expected Hardware Response                                  | Serial Monitor Output                            |
-| --------------------- | ------------------------ | ----------------------------------------------------------- | ------------------------------------------------ |
-| **Power On / Boot**   | Connect USB-C power      | OLED turns ON, clear display screen                         | System initializes cleanly                       |
-| **Typewriter Step**   | Program execution starts | Text types letter-by-letter centered inside outer rectangle | No errors                                        |
-| **Hold Phase**        | Text completely typed    | `"Welcome to Digicomp!"` stays static for 1.5s              | No errors                                        |
-| **Shrink Transition** | Hold phase finishes      | Rectangular box shrinks smoothly towards center             | No errors                                        |
-| **Missing Display**   | Disconnect SDA/SCL wire  | Display off                                                 | `"SSD1306 allocation failed. Check I2C wiring."` |
-
 ## Conclusion
 
-The **ESP32-S3 OLED Display Animation System** demonstrates reliable real-time graphics rendering on $128 \times 32$ pixel SSD1306 monochrome displays. By leveraging dynamic layout metrics (`getTextBounds`), the application ensures flicker-free, properly aligned visual animations suitable for embedded user interfaces and status telemetry displays.
+The **ESP32-S3 OLED Display Animation System** demonstrates reliable real-time graphics rendering on 128 x 32 pixel SSD1306 monochrome displays. By leveraging dynamic layout metrics (`getTextBounds`), the application ensures flicker-free, properly aligned visual animations suitable for embedded user interfaces and status telemetry displays.
