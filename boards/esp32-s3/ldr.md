@@ -11,17 +11,21 @@ This project uses an **Digicomp ESP32-S3 Dev Board** to automate a hardware syst
 The system performs two main real-time functions based on ambient light levels:
 
 - **Dynamic LED Dimming:** The onboard LED brightness scales proportionally with ambient darkness using Pulse Width Modulation (PWM).
-- **Automated Servo Movement:** When ambient darkness crosses a set threshold, the 9g servo motor automatically rotates to a 90° position. When ambient light returns, it returns to the home position 0°.
+- **Automated Servo Movement:** When ambient darkness crosses a set threshold, the 9g servo motor automatically rotates to a $90^\circ$ position. When ambient light returns, it returns to the home position ($0^\circ$).
+
+---
 
 ## Hardware Components
 
-- ESP32-S3 Dev Board
+- ESP32-S3 Dev Board-WROOM
 - LDR Light Sensor Module (4-pin with potentiometer)
 - 9g Micro Servo Motor (DXW90 / SG90)
-- Onboard LED (GPIO 2)
+- Onboard LED (GPIO 21)
 - Jumper wires
-- USB-C Cable
+- Micro-USB / USB-C Cable
 - Computer/Laptop running Command Prompt (`cmd`)
+
+---
 
 ## Pin Connections
 
@@ -34,7 +38,7 @@ The system performs two main real-time functions based on ambient light levels:
 | **9g Servo Motor**    | Signal (Yellow/Orange) | **GPIO 6**             | 50Hz PWM Signal               |
 | **9g Servo Motor**    | VCC (Red)              | **5V / VBUS**          | 5V Power Supply               |
 | **9g Servo Motor**    | Ground (Brown/Black)   | **GND**                | Power Ground                  |
-| **Onboard LED**       | Built-in               | **GPIO 2**             | Controlled via 16-bit PWM     |
+| **Onboard LED**       | Built-in               | **GPIO 21**             | Controlled via 16-bit PWM     |
 
 ### Connection Summary
 
@@ -46,6 +50,8 @@ The system performs two main real-time functions based on ambient light levels:
 - **Servo VCC → ESP32-S3 5V / VBUS**
 - **Servo GND → ESP32-S3 GND**
 
+---
+
 ## Software & Environment Setup
 
 - **MicroPython Firmware:** Flashed onto the ESP32-S3
@@ -54,31 +60,37 @@ The system performs two main real-time functions based on ambient light levels:
 - `machine` (Pin, ADC, PWM)
 - `time` (sleep, delays)
 
+---
+
 ## How the Project Works
 
 The system operates in three main functional phases:
 
 ### Light Sensing (ADC & Digital Reads)
 
-The **LDR module's** Analog Output (AO) is connected to **GPIO 4**. The **ESP32-S3** uses a 12-bit Analog-to-Digital Converter (ADC) with 11dB attenuation (0V to 3.3V range) to read values from 0 (Brightest) to 4095 (Darkest).
+The LDR module's **Analog Output (AO)** is connected to **GPIO 4**. The ESP32-S3 uses a 12-bit Analog-to-Digital Converter (ADC) with 11dB attenuation ($0\text{V} - 3.3\text{V}$ range) to read values from `0` (Brightest) to `4095` (Darkest).
 
 ### Dynamic LED Brightness Scaling
 
-The **onboard LED** on **GPIO 2** is driven using PWM at 500 Hz. The 12-bit ADC reading from the LDR module (0 to 4095) is mapped to a 16-bit PWM duty cycle (0 to 65535) using the following formula:
+The **onboard LED** on **GPIO 21** is driven using PWM at `500 Hz`. The raw ADC value from the LDR module is mapped directly to a 16-bit PWM duty cycle (`0` to `65535`):
 
-**Duty Cycle = (Raw ADC / 4095) × 65535**
+$$\text{Duty Cycle} = \left(\frac{\text{Raw ADC}}{4095}\right) \times 65535$$
 
-As ambient light decreases, the LDR resistance rises, producing a higher ADC value. This increases the PWM duty cycle, making the LED shine brighter in darker conditions.
+As ambient light decreases (higher ADC value), the LED duty cycle increases, making the LED shine brighter.
 
 ### Servo Motor Position Control
 
-The **9g micro servo** on **GPIO 6** is driven using a 50 Hz PWM frequency (20 ms period). The pulse width is mapped between 0.5 ms (Duty ~1638) for 0° and 2.5 ms (Duty ~8192) for 180°.
+The **9g micro servo** on **GPIO 6** is driven using a `50 Hz` PWM frequency ($20\text{ ms}$ period). The pulse width is mapped between $0.5\text{ ms}$ (Duty ~1638) for $0^\circ$ and $2.5\text{ ms}$ (Duty ~8192) for $180^\circ$.
 
-When ambient darkness crosses the defined threshold (`DARK_THRESHOLD = 2000`), the servo angle switches from 0° to 90°.
+When ambient darkness crosses the defined threshold (`DARK_THRESHOLD = 2000`), the servo angle switches from $0^\circ$ to $90^\circ$.
+
+---
 
 ## Complete MicroPython Program (`main.py`)
 
 ```python
+
+
 import machine
 import time
 
@@ -175,6 +187,8 @@ except KeyboardInterrupt:
 
 ```
 
+---
+
 ## Working Flow Chart
 
 ```text
@@ -189,7 +203,7 @@ except KeyboardInterrupt:
 Calculate LED Duty Cycle                Compare Raw ADC
  (Darker = Brighter)                 with Threshold (2000)
        │                                       │
-Apply PWM to GPIO 2                     ┌──────┴──────┐
+Apply PWM to GPIO 21                    ┌──────┴──────┐
        │                                ▼             ▼
        │                          Raw > 2000    Raw <= 2000
        │                                │             │
@@ -202,6 +216,8 @@ Apply PWM to GPIO 2                     ┌──────┴─────�
                Delay 0.1s & Repeat Loop
 
 ```
+
+---
 
 ## Deployment Instructions (via `cmd` & `mpremote`)
 
@@ -226,14 +242,18 @@ python -m mpremote connect COM8 repl
 
 ```
 
+---
+
 ## Verification Matrix
 
-| Test Scenario        | Action                      | Expected Hardware Response                                 | Expected Output Stream              |
-| -------------------- | --------------------------- | ---------------------------------------------------------- | ----------------------------------- |
-| **Ambient Light**    | Normal room lighting        | Onboard LED dim or OFF; Servo at 0°                        | `LDR Raw: <2000                     |
-| **Darkness Trigger** | Cover LDR sensor completely | Onboard LED ramps to full brightness; Servo rotates to 90° | `LDR Raw: >2000                     |
-| **Partial Dark**     | Partially shade sensor      | LED glow increases proportionally                          | `LED Duty` value increases smoothly |
-| **Exit**             | Press `Ctrl + C` in REPL    | Servo homes to 0°, LED turns OFF cleanly                   | `System stopped cleanly.`           |
+| Test Scenario        | Action                      | Expected Hardware Response                                        | Expected Output Stream              |
+| -------------------- | --------------------------- | ----------------------------------------------------------------- | ----------------------------------- |
+| **Ambient Light**    | Normal room lighting        | Onboard LED dim or OFF; Servo at $0^\circ$                        | `LDR Raw: <2000                     |
+| **Darkness Trigger** | Cover LDR sensor completely | Onboard LED ramps to full brightness; Servo rotates to $90^\circ$ | `LDR Raw: >2000                     |
+| **Partial Dark**     | Partially shade sensor      | LED glow increases proportionally                                 | `LED Duty` value increases smoothly |
+| **Exit**             | Press `Ctrl + C` in REPL    | Servo homes to $0^\circ$, LED turns OFF cleanly                   | `System stopped cleanly.`           |
+
+---
 
 ## Conclusion
 
