@@ -26,7 +26,7 @@ This confirms both the display path (SPI) and the touch path (I²C) in a single 
 | Component | Details |
 |---|---|
 | Microcontroller | Digicomp ESP32-S3 dev board |
-| Display | Waveshare 1.69" LCD, ST7789 driver, 240 × 280 pixels |
+| Display | Waveshare 1.69 inch  LCD, ST7789 driver, 240 × 280 pixels |
 | Touch controller | CST816T|
 | Firmware | MicroPython |
 
