@@ -18,7 +18,7 @@ The system performs two main real-time functions based on ambient light levels:
 - ESP32-S3 Dev Board
 - LDR Light Sensor Module (4-pin with potentiometer)
 - 9g Micro Servo Motor (DXW90 / SG90)
-- Onboard LED (GPIO 2)
+- Onboard LED (GPIO 21)
 - Jumper wires
 - USB-C Cable
 - Computer/Laptop running Command Prompt (`cmd`)
@@ -64,7 +64,7 @@ The **LDR module's** Analog Output (AO) is connected to **GPIO 4**. The **ESP32-
 
 ### Dynamic LED Brightness Scaling
 
-The **onboard LED** on **GPIO 2** is driven using PWM at 500 Hz. The 12-bit ADC reading from the LDR module (0 to 4095) is mapped to a 16-bit PWM duty cycle (0 to 65535) using the following formula:
+The **onboard LED** on **GPIO 21** is driven using PWM at 500 Hz. The 12-bit ADC reading from the LDR module (0 to 4095) is mapped to a 16-bit PWM duty cycle (0 to 65535) using the following formula:
 
 **Duty Cycle = (Raw ADC / 4095) × 65535**
 
@@ -88,7 +88,7 @@ import time
 
 LDR_AO_PIN = 4  # Analog Output (ADC1_CH3)
 LDR_DO_PIN = 5  # Digital Output (Threshold trigger)
-LED_PIN = 2     # Onboard LED (PWM)
+LED_PIN = 21     # Onboard LED (PWM)
 SERVO_PIN = 6   # 9g Servo Signal Wire (PWM)
 
 # Setup Analog Read for LDR
@@ -189,7 +189,7 @@ except KeyboardInterrupt:
 Calculate LED Duty Cycle                Compare Raw ADC
  (Darker = Brighter)                 with Threshold (2000)
        │                                       │
-Apply PWM to GPIO 2                     ┌──────┴──────┐
+Apply PWM to GPIO 21                     ┌──────┴──────┐
        │                                ▼             ▼
        │                          Raw > 2000    Raw <= 2000
        │                                │             │
