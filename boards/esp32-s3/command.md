@@ -1,5 +1,5 @@
 ---
-title: Command Guide
+title: Micropython Setup
 ---
 
 
