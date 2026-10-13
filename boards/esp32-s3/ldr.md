@@ -34,7 +34,7 @@ The system performs two main real-time functions based on ambient light levels:
 | **9g Servo Motor**    | Signal (Yellow/Orange) | **GPIO 6**             | 50Hz PWM Signal               |
 | **9g Servo Motor**    | VCC (Red)              | **5V / VBUS**          | 5V Power Supply               |
 | **9g Servo Motor**    | Ground (Brown/Black)   | **GND**                | Power Ground                  |
-| **Onboard LED**       | Built-in               | **GPIO 2**             | Controlled via 16-bit PWM     |
+| **Onboard LED**       | Built-in               | **GPIO 21**             | Controlled via 16-bit PWM     |
 
 ### Connection Summary
 
