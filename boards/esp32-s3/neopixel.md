@@ -1,8 +1,8 @@
 ---
-title: Touch-Controlled RGB LED
+title: Neopixel LED Strip
 ---
 
-# Touch-Controlled RGB LED Strip
+# Touch-Controlled Neopixel (WS2812B) LED Strip
 
 ## Project Overview
 
